@@ -9,7 +9,7 @@
 #include "apTouchManager.h"
 
 USING_NS_CC;
-
+using namespace arphomod;
 SmoothMoveNode::SmoothMoveNode() {
 	// TODO Auto-generated constructor stub
 
@@ -41,7 +41,9 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 	//auto& force = _force;
 	auto& touchedCoordinates = _touchedCoordinates;
 
-	_manager->setBehavior(this, [this,&touchedCoordinates](cocos2d::Touch* touch){
+	_manager->setBehavior(this, [this,&touchedCoordinates](){
+
+		auto touch = _manager->getTouch(this);
 
 		if(isScheduled(schedule_selector(SmoothMoveNode::slide))) {
 			unschedule(schedule_selector(SmoothMoveNode::slide));
@@ -68,8 +70,9 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 	}, APTouchType::Began);
 
 	_manager->setBehavior(this,
-			[this/*&angle, &force,*/, &touchedCoordinates](cocos2d::Touch* touch) {
+			[this/*&angle, &force,*/, &touchedCoordinates]() {
 
+				auto touch = _manager->getTouch(this);
 				_touchedCoordinates.emplace_back(touch->getLocation());
 				_touchedCoordinates.pop_front();
 
@@ -78,7 +81,8 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 			}, APTouchType::MovedInside);
 
 	_manager->setBehavior(this,
-			[this](cocos2d::Touch* touch) {
+			[this]() {
+
 
 				auto end = _touchedCoordinates.end();
 				auto angleX = (*(std::prev(end, 1))).x - (*(std::prev(end, 4))).x;

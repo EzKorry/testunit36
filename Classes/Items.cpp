@@ -58,7 +58,7 @@ bool TouchManagerTestItem::itemInit() {
 	auto tm = getAPTouchManager();
 	auto checker = APTouchManager::createCheckerWithRect(sprite, Rect(-50.0f, -50.0f, 100.0f, 100.0f));
 	tm->registerNode(sprite,checker);
-	tm->setBehavior(sprite, [label](cocos2d::Touch* touch)->void {
+	tm->setBehavior(sprite, [label]()->void {
 		label->setString("Fuck yeah sprite touched!!");
 		label->setColor(Color3B(cocos2d::random<int>(128, 255),cocos2d::random<int>(128, 255),cocos2d::random<int>(128, 255)));
 	},APTouchType::Began);
@@ -153,7 +153,7 @@ bool AWSRankingTestItem::itemInit() {
 	auto ch = APTouchManager::createDefaultChecker(labelClick);
 	auto touchManager = getAPTouchManager();
 	touchManager->registerNode(labelClick, ch);
-	touchManager->setBehavior(labelClick, [this](Touch* touch) {
+	touchManager->setBehavior(labelClick, [this]() {
 		_client->emit("chat message","yeah yeah~~");
 		log("client emitted!");
 	}, APTouchType::Began);
@@ -493,7 +493,7 @@ bool PathFindingTest::itemInit() {
 				return r.containsPoint(touch->getLocation());
 			});
 
-			touchManager->setBehavior(p, [this, p](cocos2d::Touch* touch)->void {
+			touchManager->setBehavior(p, [this, p]()->void {
 				if(this->_isStart == true) {
 					_startingPoint = p;
 					_isStart = false;

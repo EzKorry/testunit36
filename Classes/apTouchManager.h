@@ -22,12 +22,30 @@
 
 namespace arphomod {
 
+/**
+ * - Began: TouchBegan when each Checker true.
+ * - MovedInner: TouchMoved out to in. required Began.
+ * - MovedInside: TouchMoved in to in. required Began.
+ * - MovedOuter: TouchMoved in to out. required Began.
+ * - MovedOutside: TouchMoved out to out. required Began.
+ * - MovedInnerIgnoreBegan: TouchMoved out to in. not required Began.
+ * - MovedInsideIgnoreBegan: TouchMoved in to in. not required Began.
+ * - MovedOuterIgnoreBegan: TouchMoved in to out. not required Began.
+ * - EndedIn: TouchEnded inside. required Began.
+ * - EndedOut: TouchEnded outside. required Began.
+ * - Cancelled: TouchCancelled. required Began.
+ */
+
+
 enum class APTouchType{
 	Began,
 	MovedInner,
 	MovedInside,
 	MovedOuter,
 	MovedOutside,
+	MovedInnerIgnoreBegan,
+	MovedInsideIgnoreBegan,
+	MovedOuterIgnoreBegan,
 	EndedIn,
 	EndedOut,
 	Cancelled,
@@ -39,9 +57,21 @@ enum class APAttribute{
 
 };
 
+
 using APTouchChecker = std::function<bool(cocos2d::Touch*)>;
-using APTouchBehavior = std::function<void(cocos2d::Touch*)>;
+using APTouchBehavior = std::function<void()>;
 using APTouchBehaviorMap = std::unordered_map<cocos2d::Node*, APTouchBehavior>;
+
+struct APTouchData {
+	APTouchData(APTouchChecker checker) : checker(checker) {
+
+	}
+	APTouchChecker checker;
+	bool enabled = true;
+	int maxTouch = 6;
+	int order = 0;
+};
+
 class APTouchManager{
 public:
 
@@ -51,11 +81,11 @@ public:
 	// default order: 0
 	// default max Touch: 6
 	void registerNode(cocos2d::Node* node, APTouchChecker checker);
-	void initWithNodeToAttatch(cocos2d::Node* node);
+	void initWithNodeToAttatch();
 
 	// factory Method
 	static std::shared_ptr<APTouchManager> create(cocos2d::Node* node);
-
+	static std::shared_ptr<APTouchManager> getInstance();
 
 	// set behavior with specified timing
 	void setBehavior(cocos2d::Node* node, APTouchBehavior behavior, APTouchType timing);
@@ -65,6 +95,10 @@ public:
 
 	// set that this manager is enabled.
 	void setEnabledManager(bool enabled);
+
+	// get now touch.
+	cocos2d::Touch* getTouch(std::string tag);
+	cocos2d::Touch* getTouch(cocos2d::Node* node);
 
 	// set that something node is enabled.
 	void setEnabledNode(cocos2d::Node* node, bool enabled);
@@ -112,7 +146,7 @@ public:
 
 private:
 	// initialize Callbacks
-	void attachCallback(cocos2d::Node* node);
+	void attachCallback();
 
 	// callbacks
 	bool onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event);
@@ -132,12 +166,16 @@ private:
 
 
 	std::map<APTouchType, APTouchBehaviorMap> _behaviorMap;
-	std::unordered_map<cocos2d::Node*, APTouchChecker> _checkerMap;
+	std::unordered_map<cocos2d::Node*, APTouchData> _d;
+	/*std::unordered_map<cocos2d::Node*, APTouchChecker> _checkerMap;
 	std::unordered_map<cocos2d::Node*, bool> _enabledMap;
 	std::unordered_map<cocos2d::Node*, int> _maxTouchMap;
-	std::unordered_map<cocos2d::Node*, int> _orderMap;
-	std::unordered_map<int, cocos2d::Node*> _nowNodeMap;
-	std::unordered_map<int, cocos2d::Node*> _beganNodeMap;
+	std::unordered_map<cocos2d::Node*, int> _nodeToOrder;*/
+	std::unordered_map<int, cocos2d::Node*> _touchToNowNode;
+	std::unordered_map<int, cocos2d::Node*> _touchToBeganNode;
+	std::unordered_map<int, cocos2d::Touch*> _touchIdToTouch;
+
+	static std::shared_ptr<APTouchManager> _sp;
 
 	bool _enabled{true};
 

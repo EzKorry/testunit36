@@ -8,9 +8,8 @@
 #include "BaseItem.h"
 #include "apTouchManager.h"
 
-enum class APTouchType;
-
 USING_NS_CC;
+using namespace arphomod;
 
 BaseItem::BaseItem() {
 	// TODO Auto-generated constructor stub
@@ -38,7 +37,7 @@ bool BaseItem::init(std::shared_ptr<APTouchManager> apTouchManager) {
 	_apTouchManager->registerNode(backButton, APTouchManager::createDefaultChecker(backButton));
 	_apTouchManager->setOrder(backButton, 9999);
 	auto tempAp = _apTouchManager;
-	_apTouchManager->setBehavior(backButton, [tempAp](Touch* touch) {
+	_apTouchManager->setBehavior(backButton, [tempAp]() {
 
 		cocos2d::Director::getInstance()->popScene();
 		tempAp->cancelAllTouch();

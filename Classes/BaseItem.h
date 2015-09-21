@@ -9,7 +9,9 @@
 #define BASEITEM_H_
 
 #include <cocos2d.h>
-class APTouchManager;
+#include "apTouchManager.h"
+using namespace arphomod;
+
 // derived class must have "CREATE_FUNC"
 class BaseItem: public cocos2d::Scene {
 public:

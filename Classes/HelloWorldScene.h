@@ -2,9 +2,11 @@
 #define __HELLOWORLD_SCENE_H__
 
 #include "cocos2d.h"
+#include "apTouchManager.h"
+
+using namespace arphomod;
 
 class BaseItem;
-class APTouchManager;
 class HelloWorld : public cocos2d::Scene
 {
 public:

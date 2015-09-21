@@ -8,8 +8,11 @@
 #ifndef SMOOTHMOVENODE_H_
 #define SMOOTHMOVENODE_H_
 
+
 #include <cocos2d.h>
-class APTouchManager;
+#include "apTouchManager.h"
+
+using namespace arphomod;
 class SmoothMoveNode: public cocos2d::Node {
 public:
 	SmoothMoveNode();

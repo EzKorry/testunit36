@@ -8,6 +8,10 @@
 #ifndef APHOOKACTIONMANAGER_H_
 #define APHOOKACTIONMANAGER_H_
 #include <string>
+#include <functional>
+#include <memory>
+#include <unordered_map>
+#include <set>
 
 namespace arphomod {
 using namespace std;
@@ -38,7 +42,7 @@ public:
 private:
 	string _defaultTag {""};
 	unordered_map<string,set<string>> _actions;
-	unordered_map<string, function<>
+	unordered_map<string, function<void()>> _tagToFunc;
 	static shared_ptr<apHookActionManager> _sp;
 };
 

@@ -20,15 +20,24 @@ class apHookActionManager {
 public:
 	apHookActionManager();
 
-	void addHook(string hook);
-	void removeHook(string hook);
-	void runHook(string hook);
+	// add event hook.
+	template<class TString>
+	void addHook(TString&& hook);
 
-	void addAction(string hook, function<void()> action, string tag);
+	// add function to hook.
+	template<class TFunc>
+	void addAction(const std::string& hook, const std::string& tag, TFunc&& action);
 
-	void removeAction(string tag);
+	// run hook. then all that function will be invoked.
+	void runHook(const std::string& hook);
 
+	// remove hook.
+	void removeHook(const std::string& hook);
 
+	// remove Action.
+	void removeAction(const std::string& hook, const string& tag);
+
+	// singleton.
 	static shared_ptr<apHookActionManager> getInstance() {
 
 		if(_sp == nullptr) {
@@ -40,9 +49,10 @@ public:
 	virtual ~apHookActionManager();
 
 private:
-	string _defaultTag {""};
+	string _defaultTag {"empty"};
 	unordered_map<string,set<string>> _actions;
 	unordered_map<string, function<void()>> _tagToFunc;
+
 	static shared_ptr<apHookActionManager> _sp;
 };
 

@@ -80,7 +80,9 @@ public:
 	// initialize Nodes
 	// default order: 0
 	// default max Touch: 6
-	void registerNode(cocos2d::Node* node, APTouchChecker checker);
+	void registerNode(cocos2d::Node* node, APTouchChecker checker, const std::string& hook);
+	void registerNode(cocos2d::Node* node, APTouchChecker checker, std::string&& hook);
+
 	void initWithNodeToAttatch();
 
 	// factory Method
@@ -88,7 +90,11 @@ public:
 	static std::shared_ptr<APTouchManager> getInstance();
 
 	// set behavior with specified timing
-	void setBehavior(cocos2d::Node* node, APTouchBehavior behavior, APTouchType timing);
+	void addBehavior(cocos2d::Node* node,APTouchType timing, APTouchBehavior behavior, const std::string& behaviorTag);
+	void addBehavior(cocos2d::Node* node,APTouchType timing, APTouchBehavior behavior, std::string&& behaviorTag);
+
+	// delete behavior
+	void delBehavior(const std::string& hook, const std::string& behaviorTag);
 
 	// set checker that says when it is true if touch point is in custom area.
 	void setChecker(cocos2d::Node* node, APTouchChecker checker);
@@ -97,7 +103,6 @@ public:
 	void setEnabledManager(bool enabled);
 
 	// get now touch.
-	cocos2d::Touch* getTouch(std::string tag);
 	cocos2d::Touch* getTouch(cocos2d::Node* node);
 
 	// set that something node is enabled.

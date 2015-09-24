@@ -8,7 +8,7 @@
 #include "apHookActionManager.h"
 
 namespace arphomod {
-
+/*
 template<class TString>
 void apHookActionManager::addHook(TString&& hook) {
 
@@ -28,8 +28,7 @@ void apHookActionManager::addAction(const std::string& hook, const std::string& 
 	_actions[hook].emplace(tag);
 	_tagToFunc.emplace(tag, std::forward<TFunc>(action));
 
-
-}
+}*/
 
 // run hook. then all that function will be invoked.
 void apHookActionManager::runHook(const std::string& hook) {

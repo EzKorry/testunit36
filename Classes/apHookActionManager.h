@@ -22,12 +22,26 @@ public:
 
 	// add event hook.
 	template<class TString>
-	void addHook(TString&& hook);
+	void addHook(TString&& hook) {
+
+		// if hook not found,
+		if(_actions.find(hook) == _actions.end()) {
+			_actions.emplace(std::forward<TString>(hook), std::set<string>());
+		}
+	}
 
 	// add function to hook.
 	template<class TFunc>
-	void addAction(const std::string& hook, const std::string& tag, TFunc&& action);
+	void addAction(const std::string& hook, const std::string& tag, TFunc&& action) {
 
+
+		addHook(hook);
+
+		// if tag not found,
+		_actions[hook].emplace(tag);
+		_tagToFunc.emplace(tag, std::forward<TFunc>(action));
+
+	}
 	// run hook. then all that function will be invoked.
 	void runHook(const std::string& hook);
 

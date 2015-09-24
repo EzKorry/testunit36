@@ -33,6 +33,7 @@ namespace arphomod {
  * - MovedInsideIgnoreBegan: TouchMoved in to in. not required Began.
  * - MovedOuterIgnoreBegan: TouchMoved in to out. not required Began.
  * - EndedIn: TouchEnded inside. required Began.
+ * - EndedInIgnoreBegan: TouchEnded inside. not required Began.
  * - EndedOut: TouchEnded outside. required Began.
  * - Cancelled: TouchCancelled. required Began.
  */
@@ -48,6 +49,7 @@ enum class APTouchType{
 	MovedInsideIgnoreBegan,
 	MovedOuterIgnoreBegan,
 	EndedIn,
+	EndedInIgnoreBegan,
 	EndedOut,
 	Cancelled,
 
@@ -64,12 +66,18 @@ using APTouchBehavior = std::function<void()>;
 using APTouchBehaviorMap = std::unordered_map<cocos2d::Node*, APTouchBehavior>;
 
 struct APTouchData {
+	APTouchData():checker(
+			[](cocos2d::Touch*)->bool {
+		return false;
+	}){}
+
 	APTouchData(APTouchChecker checker) : checker(checker) {
 
 	}
-	std::unordered_map<APTouchType, std::string> hook;
+	std::map<APTouchType, std::string> hook;
 	APTouchChecker checker;
 	bool enabled = true;
+	bool hasExclusiveTouch = false;
 	int maxTouch = 6;
 	int order = 0;
 };
@@ -91,9 +99,23 @@ public:
 
 	// set behavior with specified timing
 	// you can do with same behavior tag and different behavior function.
-	template<class TFunc>
-	void addBehavior(cocos2d::Node* node,APTouchType timing, TFunc behavior, const std::string& hook, const std::string& behaviorTag);
-
+	/*
+	 * @param
+	 * node: you will add behavior to node that has unique checker.
+	 * timing: behavior executes at this timing.
+	 * behavior: void().
+	 * hook: apTouchManager works with apHookActionManager. this hook is used that.
+	 * behaviorTag: this is used to actionTag in apHookActionManager. default="_from_tm"
+	 */
+	template<typename TFunc>
+	void addBehavior(cocos2d::Node* node,APTouchType timing, TFunc&& behavior, const std::string& hook, const std::string& behaviorTag = "_from_tm") {
+		// lazy initializing.
+		if(_amp == nullptr) {
+			_amp = apHookActionManager::getInstance();
+		}
+		_amp->addAction(hook, behaviorTag, std::forward<TFunc>(behavior));
+		_d[node].hook.emplace(timing, hook);
+	}
 
 	// delete behavior
 	void delBehavior(const std::string& hook, const std::string& behaviorTag);
@@ -107,6 +129,10 @@ public:
 	// get now touch.
 	cocos2d::Touch* getTouch(cocos2d::Node* node);
 
+	// true if it could have only one touch.
+	// false if it could have multiple touch.
+	void setHasExclusiveTouch(bool excluded);
+
 	// set that something node is enabled.
 	void setEnabledNode(cocos2d::Node* node, bool enabled);
 
@@ -118,8 +144,6 @@ public:
 
 	// set something node's order. higher number indicates higher priority.
 	void setOrder(cocos2d::Node* node, int order);
-
-	void setBeganFromOutsideEnabled(bool enabled); 	// coming soon!
 
 	// reset touch manager.
 	void clear();
@@ -144,7 +168,6 @@ public:
 	// if with Rect(-20, -30, 100, 100), node positioning (200,200), then you can touch
 	// (180, 170, 100, 100) rect at that time.
 	static APTouchChecker createCheckerWithRect(cocos2d::Node* node, const cocos2d::Rect& rect);
-
 
 	virtual ~APTouchManager();
 	APTouchManager();

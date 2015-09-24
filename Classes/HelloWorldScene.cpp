@@ -2,6 +2,7 @@
 #include "apTouchManager.h"
 #include "BaseItem.h"
 #include "Items.h"
+#include <sstream>
 
 USING_NS_CC;
 using namespace arphomod;
@@ -60,7 +61,7 @@ bool HelloWorld::init()
     // add the sprite as a child to this layer
     //this->addChild(sprite, 0);
     
-    _apTouchManager = APTouchManager::create(this);
+    _apTouchManager = APTouchManager::getInstance();
 
 	_main = Node::create();
 	this->addChild(_main, 0, "main");
@@ -77,44 +78,50 @@ bool HelloWorld::init()
 
     auto defaultChecker = APTouchManager::createDefaultChecker(square);
 	_apTouchManager->registerNode(square, defaultChecker);
-	_apTouchManager->setBehavior(square,
+	_apTouchManager->addBehavior(square,APTouchType::Began,
 			[stateLabel]()->void {
 				cocos2d::log("begand!!!");
 				stateLabel->setString("began");
-			}, APTouchType::Began);
+			}, "squareBegan","o");
 
-	_apTouchManager->setBehavior(square,
+	_apTouchManager->addBehavior(square,APTouchType::MovedOuter,
 			[stateLabel]()->void {
 				cocos2d::log("movedinside yeah");
 				stateLabel->setString("moved");
-			}, APTouchType::MovedInside);
-	_apTouchManager->setBehavior(square,
-				[stateLabel]()->void {
-					cocos2d::log("movedinner13848");
-					stateLabel->setString("moved");
-				}, APTouchType::MovedInner);
-	_apTouchManager->setBehavior(square,
-				[stateLabel]()->void {
-					cocos2d::log("movedoutside1992");
-					stateLabel->setString("moved");
-				}, APTouchType::MovedOutside);
-	_apTouchManager->setBehavior(square,
-				[stateLabel]()->void {
-					cocos2d::log("movedouter123");
-					stateLabel->setString("moved");
-				}, APTouchType::MovedOuter);
+			}, "squareMoveInside","o");
+	_apTouchManager->addBehavior(square,APTouchType::MovedInner,
+			[stateLabel]()->void {
+				cocos2d::log("movedinner13848");
+				stateLabel->setString("moved");
+			}, "squareMoveInner", "o");
+	_apTouchManager->addBehavior(square,APTouchType::MovedInnerIgnoreBegan,
+			[stateLabel]()->void {
+				cocos2d::log("movedoutside1992");
+				stateLabel->setString("moved");
+			}, "squareMoveInnerNoBegan", "o");
+	_apTouchManager->addBehavior(square, APTouchType::MovedOuterIgnoreBegan,
+			[stateLabel]()->void {
+				cocos2d::log("movedOuterIgnoreBegan");
+				stateLabel->setString("moved");
+			},"wquareMoveOuter", "o");
 
-	_apTouchManager->setBehavior(square,
+	_apTouchManager->addBehavior(square, APTouchType::EndedIn,
 			[stateLabel]()->void {
 				cocos2d::log("Endedin656");
 				stateLabel->setString("ended");
-			}, APTouchType::EndedIn);
+			}, "squareEndIn");
 
-	_apTouchManager->setBehavior(square,
+	_apTouchManager->addBehavior(square, APTouchType::EndedOut,
 			[stateLabel]()->void {
 				cocos2d::log("EndedOut###!!");
 				stateLabel->setString("cancelled");
-			}, APTouchType::EndedOut);
+			}, "squareEndOut");
+	_apTouchManager->addBehavior(square, APTouchType::EndedInIgnoreBegan,
+			[stateLabel]()->void {
+				cocos2d::log("EndedOut###!!");
+				stateLabel->setString("cancelled");
+			}, "squareEndInNoBegan");
+
 
 
 	/* Up Down slide
@@ -126,15 +133,15 @@ bool HelloWorld::init()
 		return true;
 	});
 	_apTouchManager->setOrder(emptyNode, -100);
-	_apTouchManager->setBehavior(emptyNode,[this, emptyNode]()->void {
+	_apTouchManager->addBehavior(emptyNode, APTouchType::Began, [this, emptyNode]()->void {
 		_startingPoint = _main->getPosition();
 		auto touch = _apTouchManager->getTouch(emptyNode);
 		_startingTouchPoint = touch->getLocation();
-	} ,APTouchType::Began);
-	_apTouchManager->setBehavior(emptyNode, [this, emptyNode]()->void {
+	} ,"emptyNodeBegan");
+	_apTouchManager->addBehavior(emptyNode, APTouchType::MovedInside, [this, emptyNode]()->void {
 		auto touch = _apTouchManager->getTouch(emptyNode);
 		_main->setPosition(_startingPoint + touch->getLocation() - _startingTouchPoint );
-	}, APTouchType::MovedInside);
+	}, "emptyNodeMoved");
 
 
 
@@ -170,14 +177,17 @@ void HelloWorld::registerScene(std::string title) {
 
     	T* item{nullptr};
     	auto tempAp = _apTouchManager;
+    	stringstream ss;
+    	ss << label->getString() << "Behavior";
+
     	_apTouchManager->registerNode(label, defaultChecker);
-    	_apTouchManager->setBehavior(label,
+    	_apTouchManager->addBehavior(label, APTouchType::Began,
     			[item, tempAp]()->void  {
     		auto scene = BaseItem::create<typename std::remove_pointer<typename std::decay<decltype(item)>::type>::type>(tempAp);
     		cocos2d::Director::getInstance()->pushScene(scene);
     		//cocos2d::log("%d touched",scene);
     		tempAp->cancelAllTouch();
-    	}, APTouchType::Began);
+    	}, ss.str());
 
 
     	_order++;

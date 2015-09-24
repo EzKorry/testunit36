@@ -41,7 +41,7 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 	//auto& force = _force;
 	auto& touchedCoordinates = _touchedCoordinates;
 
-	_manager->setBehavior(this, [this,&touchedCoordinates](){
+	_manager->addBehavior(this, APTouchType::Began, [this,&touchedCoordinates](){
 
 		auto touch = _manager->getTouch(this);
 
@@ -67,9 +67,9 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 
 
 
-	}, APTouchType::Began);
+	}, "smoothBegan");
 
-	_manager->setBehavior(this,
+	_manager->setBehavior(this,APTouchType::MovedInside,
 			[this/*&angle, &force,*/, &touchedCoordinates]() {
 
 				auto touch = _manager->getTouch(this);
@@ -78,9 +78,9 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 
 				setPosition(_startingPoint + touch->getLocation() - _startingTouchPoint );
 
-			}, APTouchType::MovedInside);
+			}, "smoothMoveInside");
 
-	_manager->setBehavior(this,
+	_manager->setBehavior(this, APTouchType::EndedIn,
 			[this]() {
 
 
@@ -117,7 +117,7 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 
 
 
-			}, APTouchType::EndedIn);
+			}, "smoothEndIn");
 
 
 	auto label = Label::createWithTTF("power!!", "fonts/NanumBarunGothicLight.ttf", 70);

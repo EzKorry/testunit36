@@ -16,6 +16,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <sstream>
 
 USING_NS_CC;
 using namespace arphomod;
@@ -58,10 +59,10 @@ bool TouchManagerTestItem::itemInit() {
 	auto tm = getAPTouchManager();
 	auto checker = APTouchManager::createCheckerWithRect(sprite, Rect(-50.0f, -50.0f, 100.0f, 100.0f));
 	tm->registerNode(sprite,checker);
-	tm->setBehavior(sprite, [label]()->void {
+	tm->addBehavior(sprite, APTouchType::Began, [label]()->void {
 		label->setString("Fuck yeah sprite touched!!");
 		label->setColor(Color3B(cocos2d::random<int>(128, 255),cocos2d::random<int>(128, 255),cocos2d::random<int>(128, 255)));
-	},APTouchType::Began);
+	}, "TouchManagerTest");
 
 	auto moveRight = MoveBy::create(2.0f, Vec2(size.width / 4, 0));
 	auto moveLeft = MoveBy::create(2.0f, Vec2(-size.width / 4, 0));
@@ -153,10 +154,10 @@ bool AWSRankingTestItem::itemInit() {
 	auto ch = APTouchManager::createDefaultChecker(labelClick);
 	auto touchManager = getAPTouchManager();
 	touchManager->registerNode(labelClick, ch);
-	touchManager->setBehavior(labelClick, [this]() {
+	touchManager->addBehavior(labelClick,APTouchType::Began, [this]() {
 		_client->emit("chat message","yeah yeah~~");
 		log("client emitted!");
-	}, APTouchType::Began);
+	}, "awsRankingButtonPress");
 
 	_client = network::SocketIO::connect(
 			"http://ec2-54-65-12-4.ap-northeast-1.compute.amazonaws.com:3000",
@@ -492,8 +493,13 @@ bool PathFindingTest::itemInit() {
 				cocos2d::Rect r(p->getPositionX() - 40, p->getPositionY() - 40, 80, 80);
 				return r.containsPoint(touch->getLocation());
 			});
+			std::stringstream ss;
+			ss<<p->_ID;
+			ss<<"behavior";
+			cocos2d::log("%s",ss.str().c_str());
 
-			touchManager->setBehavior(p, [this, p]()->void {
+
+			touchManager->addBehavior(p, APTouchType::Began, [this, p]()->void {
 				if(this->_isStart == true) {
 					_startingPoint = p;
 					_isStart = false;
@@ -503,7 +509,7 @@ bool PathFindingTest::itemInit() {
 					_isStart = true;
 				}
 				resetDrawing();
-			},APTouchType::Began);
+			},ss.str());
 
 		}
 	}

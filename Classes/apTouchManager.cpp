@@ -27,17 +27,6 @@ std::shared_ptr<APTouchManager> APTouchManager::getInstance() {
 }
 
 void APTouchManager::initWithNodeToAttatch() {
-	_behaviorMap.emplace(APTouchType::Began, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedInside, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedOutside, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedInner, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedOuter, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::EndedIn, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::EndedOut, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::Cancelled, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedInnerIgnoreBegan, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedInsideIgnoreBegan, APTouchBehaviorMap{});
-	_behaviorMap.emplace(APTouchType::MovedOuterIgnoreBegan, APTouchBehaviorMap{});
 
 	for(int i=0;i<6;i++) {
 		_touchToBeganNode.emplace(i, nullptr);
@@ -78,9 +67,9 @@ void apTouchManager::setNode(cocos2d::Node* node, apTouchBehavior behavior,
 void apTouchManager::setNode(cocos2d::Node* node, apTouchBehavior behavior) {
 	this->RegisterNode(node, behavior, createDefaultChecker(node), node->getGlobalZOrder());
 }
-*/
-template<class TFunc>
-void APTouchManager::addBehavior(cocos2d::Node* node,APTouchType timing, TFunc behavior, const std::string& hook, const std::string& behaviorTag) {
+*//*
+template<typename TFunc>
+void APTouchManager::addBehavior(cocos2d::Node* node,APTouchType timing, TFunc&& behavior, const std::string& hook, const std::string& behaviorTag) {
 	// lazy initializing.
 	if(_amp == nullptr) {
 		_amp = apHookActionManager::getInstance();
@@ -89,7 +78,7 @@ void APTouchManager::addBehavior(cocos2d::Node* node,APTouchType timing, TFunc b
 	_d[node].hook.emplace(timing, hook);
 
 
-}
+}*/
 
 // delete behavior
 void APTouchManager::delBehavior(const std::string& hook, const std::string& behaviorTag) {
@@ -110,12 +99,7 @@ void APTouchManager::setEnabledManager(bool enabled) {
 	_enabled = enabled;
 }
 
-cocos2d::Touch* APTouchManager::getTouch(std::string tag) {
-
-
-}
 cocos2d::Touch* APTouchManager::getTouch(cocos2d::Node* node) {
-
 
 }
 
@@ -146,18 +130,14 @@ void APTouchManager::setOrder(cocos2d::Node* node, int order) {
 }
 
 
-void APTouchManager::setBeganFromOutsideEnabled(bool enabled) {
-
-}
-
 void APTouchManager::clear() {
 
-	for(auto& item:_behaviorMap) {
-		for(auto& item2:item.second) {
-			item2.first->release();
-		}
-
-		item.second.clear();
+	std::list<cocos2d::Node*> nodes;
+	for(auto& item:_d) {
+		nodes.emplace_back(item.first);
+	}
+	for(auto& item:nodes) {
+		removeNode(item);
 	}
 	_d.clear();
 
@@ -291,12 +271,16 @@ bool APTouchManager::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event){
 
 void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 	auto id = touch->getID();
+
+	if(id > 5) return;
+
 	if(_amp == nullptr) {
 		_amp = apHookActionManager::getInstance();
 	}
 	// if not began
 	//if (_touchToBeganNode[id] == nullptr || id > 5)
 
+	// they can be nullptr.
 	auto nowNode = getTouchedNode(touch);
 	auto beforeNode = _touchToNowNode[id];
 	_touchToNowNode[id] = nowNode;
@@ -401,18 +385,24 @@ void APTouchManager::onTouchCancelled(cocos2d::Touch* touch, cocos2d::Event* eve
 void APTouchManager::touchEnded(cocos2d::Touch* touch, bool isCancelled) {
 	auto id = touch->getID();
 	// if not began
-	if (_touchToBeganNode[id] == nullptr || id > 5)
+	if (id > 5)
 		return;
 
+	// they can be nullptr.
 	auto originNode = _touchToBeganNode[id];
 	auto nowNode = getTouchedNode(touch);
-	if (nowNode != originNode
-			&& !isBehaviorNullptr(originNode, APTouchType::EndedOut)) {
-		_behaviorMap[APTouchType::EndedOut][originNode](touch);
 
-	} else if (nowNode == originNode
-			&& !isBehaviorNullptr(originNode, APTouchType::EndedIn)) {
-		_behaviorMap[APTouchType::EndedIn][originNode](touch);
+	if(isCancelled) {
+		runHook(originNode, APTouchType::Cancelled);
+
+	}
+	// if presently touching node differs with origin node
+	else if (nowNode != originNode) {
+		runHook(originNode, APTouchType::EndedOut);
+		runHook(nowNode, APTouchType::EndedInIgnoreBegan);
+
+	} else {
+		runHook(originNode, APTouchType::EndedIn);
 
 	}
 
@@ -499,9 +489,7 @@ cocos2d::Node* APTouchManager::getTouchedNode(cocos2d::Touch* touch) {
 
 
 }
-bool APTouchManager::isBehaviorNullptr(cocos2d::Node* node, APTouchType type) {
-	return _behaviorMap[type][node] == nullptr;
-}
+
 
 cocos2d::Vec2 APTouchManager::getAbsolutePosition(cocos2d::Node* node) {
 	auto position = node->getPosition();

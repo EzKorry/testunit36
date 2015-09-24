@@ -37,12 +37,12 @@ bool BaseItem::init(std::shared_ptr<APTouchManager> apTouchManager) {
 	_apTouchManager->registerNode(backButton, APTouchManager::createDefaultChecker(backButton));
 	_apTouchManager->setOrder(backButton, 9999);
 	auto tempAp = _apTouchManager;
-	_apTouchManager->setBehavior(backButton, [tempAp]() {
+	_apTouchManager->addBehavior(backButton, APTouchType::Began, [tempAp]() {
 
 		cocos2d::Director::getInstance()->popScene();
 		tempAp->cancelAllTouch();
 
-	}, APTouchType::Began);
+	}, "backButtonBegan","cancelingTouch");
 
 	// set label
 	auto labelTitle = Label::createWithTTF(this->getTitle(), "fonts/NanumBarunGothicLight.ttf", 40);

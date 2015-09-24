@@ -19,7 +19,7 @@ void apHookActionManager::addHook(TString&& hook) {
 }
 
 template<class TFunc>
-void apHookActionManager::addAction(const std::string& hook, TString&& tag, TFunc&& action) {
+void apHookActionManager::addAction(const std::string& hook, const std::string& tag, TFunc&& action) {
 
 
 	addHook(hook);

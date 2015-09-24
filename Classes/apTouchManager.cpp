@@ -57,6 +57,7 @@ void APTouchManager::attachCallback(){
 
 
 void APTouchManager::registerNode(cocos2d::Node* node,	APTouchChecker checker) {
+
 	if (_d.find(node) != _d.end()) {
 		_d[node].checker = checker;
 
@@ -66,9 +67,6 @@ void APTouchManager::registerNode(cocos2d::Node* node,	APTouchChecker checker) {
 		//node->setonExitTransitionDidStartCallback([](){cocos2d::log("OnExitTransitionDidStart!!");});
 		//node->setOnExitCallback([](){cocos2d::log("onExit!!");});
 		_d.emplace(node, APTouchData(checker));
-		for(auto& item : _behaviorMap) {
-			item.second.emplace(node, nullptr);
-		}
 	}
 }
 /*
@@ -81,12 +79,27 @@ void apTouchManager::setNode(cocos2d::Node* node, apTouchBehavior behavior) {
 	this->RegisterNode(node, behavior, createDefaultChecker(node), node->getGlobalZOrder());
 }
 */
-void APTouchManager::setBehavior(cocos2d::Node* node, APTouchBehavior behavior, APTouchType timing) {
-	if (_behaviorMap[timing].find(node) != _behaviorMap[timing].end()) {
-		_behaviorMap.at(timing).at(node) = behavior;
-		//cocos2d::log("timing %d set!", timing);
+template<class TFunc>
+void APTouchManager::addBehavior(cocos2d::Node* node,APTouchType timing, TFunc behavior, const std::string& hook, const std::string& behaviorTag) {
+	// lazy initializing.
+	if(_amp == nullptr) {
+		_amp = apHookActionManager::getInstance();
 	}
+	_amp->addAction(hook, behaviorTag, std::forward<TFunc>(behavior));
+	_d[node].hook.emplace(timing, hook);
+
+
 }
+
+// delete behavior
+void APTouchManager::delBehavior(const std::string& hook, const std::string& behaviorTag) {
+	if(_amp == nullptr) {
+		_amp = apHookActionManager::getInstance();
+	}
+	_amp->removeAction(hook, behaviorTag);
+}
+
+
 void APTouchManager::setChecker(cocos2d::Node* node, APTouchChecker checker) {
 	if (_d.find(node) != _d.end()) {
 		_d[node].checker = checker;
@@ -154,11 +167,16 @@ void APTouchManager::clear() {
 }
 
 void APTouchManager::removeNode(cocos2d::Node* node) {
+	if(_amp == nullptr) {
+		_amp = apHookActionManager::getInstance();
+	}
+
 	if (_d.find(node) != _d.end()) {
-		for(auto& item:_behaviorMap) {
-			item.second.erase(node);
+
+		for(auto& item:_d[node].hook) {
+			_amp->removeHook(item.second);
 		}
-		_d.clear();
+		_d.erase(node);
 
 		node->release();
 	}
@@ -243,19 +261,20 @@ bool APTouchManager::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event){
 		cocos2d::log("weird touchStarted");
 	}
 */
+	if(_amp == nullptr) {
+		_amp = apHookActionManager::getInstance();
+	}
+
 	auto nowNode = getTouchedNode(touch);
 
+	_touchToBeganNode[touch->getID()] = nowNode;
+	_touchToNowNode[touch->getID()] = nowNode;
 
-	if (nowNode != nullptr) {
 
-
-		_touchToBeganNode[touch->getID()] = nowNode;
-		_touchToNowNode[touch->getID()] = nowNode;
-
-		if (!isBehaviorNullptr(nowNode, APTouchType::Began)) {
-			_behaviorMap[APTouchType::Began][nowNode](touch);
-		}
+	if (nowNode && !isBehaviorNullptr(nowNode, APTouchType::Began)) {
+		_behaviorMap[APTouchType::Began][nowNode](touch);
 	}
+
 	return true;
 /*
 	for(const auto& item :_checkerMap) {
@@ -272,9 +291,11 @@ bool APTouchManager::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event){
 
 void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 	auto id = touch->getID();
+	if(_amp == nullptr) {
+		_amp = apHookActionManager::getInstance();
+	}
 	// if not began
-	if (_touchToBeganNode[id] == nullptr || id > 5)
-		return;
+	//if (_touchToBeganNode[id] == nullptr || id > 5)
 
 	auto nowNode = getTouchedNode(touch);
 	auto beforeNode = _touchToNowNode[id];
@@ -282,31 +303,94 @@ void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 
 	auto originNode = _touchToBeganNode[id];
 	// outside
-	if (beforeNode != originNode && nowNode != originNode
-			&& !isBehaviorNullptr(originNode, APTouchType::MovedOutside)) {
-		_behaviorMap[APTouchType::MovedOutside][originNode](touch);
+	auto& originNodeHook = _d[originNode].hook;
+	//auto& nowNodeHook = _d[nowNode].hook;
 
+	// originNode : node when began that touch.
+	// nowNode: now touching node.
+	// beforeNode: last touched node.
+
+	// go in or go out. now touching node differs with the last touched one.
+	if(beforeNode != nowNode) {
+
+		// drag to origin node
+		if(nowNode == originNode) {
+			runHook(nowNode, APTouchType::MovedInner);
+			runHook(beforeNode, APTouchType::MovedOuterIgnoreBegan);
+		}
+
+		// if dragged not to origin node and the last node was origin Node
+		else if(beforeNode == originNode) {
+			runHook(nowNode, APTouchType::MovedInnerIgnoreBegan);
+			runHook(beforeNode, APTouchType::MovedOuter);
+		}
+
+		// all different!
+		else {
+			runHook(nowNode, APTouchType::MovedInnerIgnoreBegan);
+			runHook(beforeNode, APTouchType::MovedOuterIgnoreBegan);
+		}
+	}
+
+	// before node and now node are same.
+	else {
+
+		// if all same.
+		if(nowNode == originNode) {
+			runHook(nowNode, APTouchType::MovedInside);
+		}
+		// if only origin node differs.
+		else {
+			runHook(nowNode, APTouchType::MovedInsideIgnoreBegan);
+			runHook(originNode, APTouchType::MovedOutside);
+		}
+
+	}
+
+
+
+
+/*
+
+
+
+
+	if (beforeNode != originNode && nowNode != originNode
+			&& originNodeHook.find(APTouchType::MovedOutside) != originNodeHook.end()) {
+
+		if(nowNode )
+		_amp->runHook(originNodeHook[APTouchType::MovedOutside]);
 	}
 	// inside
 	else if (beforeNode == originNode && nowNode == originNode
-			&& !isBehaviorNullptr(originNode, APTouchType::MovedInside)) {
-		_behaviorMap[APTouchType::MovedInside][originNode](touch);
+			&& originNodeHook.find(APTouchType::MovedInside) != originNodeHook.end()) {
+		_amp->runHook(originNodeHook[APTouchType::MovedInside]);
 	}
 
 	// go to out
 	else if (beforeNode == originNode && nowNode != originNode
-			&& !isBehaviorNullptr(originNode, APTouchType::MovedOuter)) {
-		_behaviorMap[APTouchType::MovedOuter][originNode](touch);
+			&& originNodeHook.find(APTouchType::MovedOuter) != originNodeHook.end()) {
+		_amp->runHook(originNodeHook[APTouchType::MovedOuter]);
 
 	}
 
 	// inner
 	else if (beforeNode != originNode && nowNode == originNode
-			&& !isBehaviorNullptr(originNode, APTouchType::MovedInner)) {
-		_behaviorMap[APTouchType::MovedInner][originNode](touch);
+			&& originNodeHook.find(APTouchType::MovedInner) != originNodeHook.end()) {
+		_amp->runHook(originNodeHook[APTouchType::MovedInner]);
 	}
+*/
 
 }
+
+inline void APTouchManager::runHook(cocos2d::Node* node, APTouchType touchType) {
+	if(node) {
+		auto& hook = _d[node].hook;
+		if(hook.find(touchType) != hook.end())
+			_amp->runHook(hook[touchType]);
+	}
+}
+
 void APTouchManager::onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event){
 	touchEnded(touch);
 }
@@ -375,9 +459,10 @@ cocos2d::Node* APTouchManager::getTouchedNode(cocos2d::Touch* touch) {
 	std::vector<cocos2d::Node*> TouchedNodes;
 	std::vector<cocos2d::Node*> NodesToBeRemoved;
 
-	for (const auto& item : _checkerMap) {
+	for (const auto& item : _d) {
 
 		auto node = item.first;
+		auto& data = item.second;
 
 		// check if item is not available. then push to remove vector
 		if (!node->isRunning() && node->getParent() == nullptr)
@@ -385,7 +470,7 @@ cocos2d::Node* APTouchManager::getTouchedNode(cocos2d::Touch* touch) {
 
 
 		// checker true and enabled true and max Touch is irrelevant
-		else if (node->isRunning() && item.second(touch) && _enabledMap[node] && touch->getID() < _maxTouchMap[node])
+		else if (node->isRunning() && data.checker(touch) && data.enabled && touch->getID() < data.maxTouch)
 			TouchedNodes.emplace_back(node);
 
 	}
@@ -406,7 +491,7 @@ cocos2d::Node* APTouchManager::getTouchedNode(cocos2d::Touch* touch) {
 		// sort
 		std::sort(TouchedNodes.begin(), TouchedNodes.end(),
 				[this](cocos2d::Node* left, cocos2d::Node* right)->bool {
-					return _nodeToOrder[left] > _nodeToOrder[right];
+					return _d[left].order > _d[right].order;
 				});
 		return TouchedNodes[0];
 

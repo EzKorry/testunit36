@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include "cocos2d.h"
+#include "apHookActionManager.h"
 
 
 /* how to use:
@@ -66,6 +67,7 @@ struct APTouchData {
 	APTouchData(APTouchChecker checker) : checker(checker) {
 
 	}
+	std::unordered_map<APTouchType, std::string> hook;
 	APTouchChecker checker;
 	bool enabled = true;
 	int maxTouch = 6;
@@ -80,18 +82,18 @@ public:
 	// initialize Nodes
 	// default order: 0
 	// default max Touch: 6
-	void registerNode(cocos2d::Node* node, APTouchChecker checker, const std::string& hook);
-	void registerNode(cocos2d::Node* node, APTouchChecker checker, std::string&& hook);
+	void registerNode(cocos2d::Node* node, APTouchChecker checker);
 
 	void initWithNodeToAttatch();
 
-	// factory Method
-	static std::shared_ptr<APTouchManager> create(cocos2d::Node* node);
+	// singleton
 	static std::shared_ptr<APTouchManager> getInstance();
 
 	// set behavior with specified timing
-	void addBehavior(cocos2d::Node* node,APTouchType timing, APTouchBehavior behavior, const std::string& behaviorTag);
-	void addBehavior(cocos2d::Node* node,APTouchType timing, APTouchBehavior behavior, std::string&& behaviorTag);
+	// you can do with same behavior tag and different behavior function.
+	template<class TFunc>
+	void addBehavior(cocos2d::Node* node,APTouchType timing, TFunc behavior, const std::string& hook, const std::string& behaviorTag);
+
 
 	// delete behavior
 	void delBehavior(const std::string& hook, const std::string& behaviorTag);
@@ -160,6 +162,7 @@ private:
 	void onTouchCancelled(cocos2d::Touch* touch, cocos2d::Event* event);
 	inline bool isBehaviorNullptr(cocos2d::Node* node, APTouchType type);
 	inline cocos2d::Vec2 getAbsolutePosition(cocos2d::Node* node);
+	inline void runHook(cocos2d::Node*, APTouchType touchType);
 
 	void touchStarted(cocos2d::Touch* touch);
 	void touchEnded(cocos2d::Touch* touch, bool isCancelled = false);
@@ -170,7 +173,6 @@ private:
 
 
 
-	std::map<APTouchType, APTouchBehaviorMap> _behaviorMap;
 	std::unordered_map<cocos2d::Node*, APTouchData> _d;
 	/*std::unordered_map<cocos2d::Node*, APTouchChecker> _checkerMap;
 	std::unordered_map<cocos2d::Node*, bool> _enabledMap;
@@ -181,6 +183,7 @@ private:
 	std::unordered_map<int, cocos2d::Touch*> _touchIdToTouch;
 
 	static std::shared_ptr<APTouchManager> _sp;
+	std::shared_ptr<apHookActionManager> _amp;
 
 	bool _enabled{true};
 

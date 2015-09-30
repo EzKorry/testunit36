@@ -43,7 +43,7 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 
 	_manager->addBehavior(this, APTouchType::Began, [this,&touchedCoordinates](){
 
-		auto touch = _manager->getTouch(this);
+		auto touch = _manager->getTouch();
 
 		if(isScheduled(schedule_selector(SmoothMoveNode::slide))) {
 			unschedule(schedule_selector(SmoothMoveNode::slide));
@@ -69,10 +69,10 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 
 	}, "smoothBegan");
 
-	_manager->setBehavior(this,APTouchType::MovedInside,
+	_manager->addBehavior(this,APTouchType::MovedInside,
 			[this/*&angle, &force,*/, &touchedCoordinates]() {
 
-				auto touch = _manager->getTouch(this);
+				auto touch = _manager->getTouch();
 				_touchedCoordinates.emplace_back(touch->getLocation());
 				_touchedCoordinates.pop_front();
 
@@ -80,7 +80,7 @@ bool SmoothMoveNode::init(std::shared_ptr<APTouchManager> manager) {
 
 			}, "smoothMoveInside");
 
-	_manager->setBehavior(this, APTouchType::EndedIn,
+	_manager->addBehavior(this, APTouchType::EndedIn,
 			[this]() {
 
 

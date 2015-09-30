@@ -79,48 +79,59 @@ bool HelloWorld::init()
     auto defaultChecker = APTouchManager::createDefaultChecker(square);
 	_apTouchManager->registerNode(square, defaultChecker);
 	_apTouchManager->addBehavior(square,APTouchType::Began,
-			[stateLabel]()->void {
+			[stateLabel, this]()->void {
 				cocos2d::log("begand!!!");
 				stateLabel->setString("began");
+				_apTouchManager->debug_d();
 			}, "squareBegan","o");
 
 	_apTouchManager->addBehavior(square,APTouchType::MovedOuter,
 			[stateLabel]()->void {
-				cocos2d::log("movedinside yeah");
-				stateLabel->setString("moved");
-			}, "squareMoveInside","o");
+				cocos2d::log("movedOuter");
+				stateLabel->setString("movedOuter");
+			}, "squareOuter","1");
 	_apTouchManager->addBehavior(square,APTouchType::MovedInner,
 			[stateLabel]()->void {
-				cocos2d::log("movedinner13848");
-				stateLabel->setString("moved");
-			}, "squareMoveInner", "o");
+				cocos2d::log("MovedInner");
+				stateLabel->setString("MovedInner");
+			}, "squareMoveInner", "2");
 	_apTouchManager->addBehavior(square,APTouchType::MovedInnerIgnoreBegan,
 			[stateLabel]()->void {
-				cocos2d::log("movedoutside1992");
-				stateLabel->setString("moved");
-			}, "squareMoveInnerNoBegan", "o");
+				cocos2d::log("MovedInnerIgnoreBegan");
+				stateLabel->setString("MovedInnerIgnoreBegan");
+			}, "squareMoveInnerNoBegan", "3");
 	_apTouchManager->addBehavior(square, APTouchType::MovedOuterIgnoreBegan,
 			[stateLabel]()->void {
 				cocos2d::log("movedOuterIgnoreBegan");
-				stateLabel->setString("moved");
-			},"wquareMoveOuter", "o");
+				stateLabel->setString("movedOuterIgnoreBegan");
+			},"wquareMoveOuter", "4");
 
 	_apTouchManager->addBehavior(square, APTouchType::EndedIn,
 			[stateLabel]()->void {
-				cocos2d::log("Endedin656");
-				stateLabel->setString("ended");
-			}, "squareEndIn");
+				cocos2d::log("Endedin");
+				stateLabel->setString("endedIn");
+			}, "squareEndIn", "5");
 
 	_apTouchManager->addBehavior(square, APTouchType::EndedOut,
 			[stateLabel]()->void {
-				cocos2d::log("EndedOut###!!");
-				stateLabel->setString("cancelled");
-			}, "squareEndOut");
+				cocos2d::log("EndedOut");
+				stateLabel->setString("EndedOut");
+			}, "squareEndOut", "6");
 	_apTouchManager->addBehavior(square, APTouchType::EndedInIgnoreBegan,
 			[stateLabel]()->void {
-				cocos2d::log("EndedOut###!!");
-				stateLabel->setString("cancelled");
+				cocos2d::log("EndedInIgnoreBegan");
+				stateLabel->setString("EndedInIgnoreBegan");
 			}, "squareEndInNoBegan");
+	_apTouchManager->addBehavior(square, APTouchType::MovedInside,
+			[stateLabel]()->void {
+				cocos2d::log("MovedInside");
+				stateLabel->setString("MovedInside");
+			}, "squareMovedInside");
+	_apTouchManager->addBehavior(square, APTouchType::MovedOutside,
+			[stateLabel]()->void {
+				cocos2d::log("MovedOutside");
+				stateLabel->setString("MovedOutside");
+			}, "squareMovedOutside");
 
 
 
@@ -135,11 +146,11 @@ bool HelloWorld::init()
 	_apTouchManager->setOrder(emptyNode, -100);
 	_apTouchManager->addBehavior(emptyNode, APTouchType::Began, [this, emptyNode]()->void {
 		_startingPoint = _main->getPosition();
-		auto touch = _apTouchManager->getTouch(emptyNode);
+		auto touch = _apTouchManager->getTouch();
 		_startingTouchPoint = touch->getLocation();
 	} ,"emptyNodeBegan");
 	_apTouchManager->addBehavior(emptyNode, APTouchType::MovedInside, [this, emptyNode]()->void {
-		auto touch = _apTouchManager->getTouch(emptyNode);
+		auto touch = _apTouchManager->getTouch();
 		_main->setPosition(_startingPoint + touch->getLocation() - _startingTouchPoint );
 	}, "emptyNodeMoved");
 

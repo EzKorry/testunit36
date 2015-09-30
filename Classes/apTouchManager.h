@@ -71,7 +71,7 @@ struct APTouchData {
 		return false;
 	}){}
 
-	APTouchData(APTouchChecker checker) : checker(checker) {
+APTouchData(APTouchChecker checker) : checker(checker) {
 
 	}
 	std::map<APTouchType, std::string> hook;
@@ -115,6 +115,7 @@ public:
 		}
 		_amp->addAction(hook, behaviorTag, std::forward<TFunc>(behavior));
 		_d[node].hook.emplace(timing, hook);
+		cocos2d::log("addBehavior Executed!! string:%s, behaviorTag:%s", hook.c_str(), behaviorTag.c_str());
 	}
 
 	// delete behavior
@@ -128,6 +129,7 @@ public:
 
 	// get now touch.
 	cocos2d::Touch* getTouch(cocos2d::Node* node);
+	cocos2d::Touch* getTouch();
 
 	// true if it could have only one touch.
 	// false if it could have multiple touch.
@@ -154,6 +156,8 @@ public:
 	// if this execute when something touch is going, touch immediately end.
 	// no callback(ended, cancelled) executes.
 	void cancelAllTouch();
+
+	void debug_d();
 
 	// create node's default checker which uses getSize(), containsPoint()
 	// node must have anchor point (0.5,0.5)
@@ -185,7 +189,7 @@ private:
 	void onTouchCancelled(cocos2d::Touch* touch, cocos2d::Event* event);
 	inline bool isBehaviorNullptr(cocos2d::Node* node, APTouchType type);
 	inline cocos2d::Vec2 getAbsolutePosition(cocos2d::Node* node);
-	inline void runHook(cocos2d::Node*, APTouchType touchType);
+	inline void runHook(cocos2d::Node*, APTouchType touchType, cocos2d::Touch* nowTouch);
 
 	void touchStarted(cocos2d::Touch* touch);
 	void touchEnded(cocos2d::Touch* touch, bool isCancelled = false);
@@ -209,6 +213,7 @@ private:
 	std::shared_ptr<apHookActionManager> _amp;
 
 	bool _enabled{true};
+	cocos2d::Touch* _nowTouch;
 
 
 

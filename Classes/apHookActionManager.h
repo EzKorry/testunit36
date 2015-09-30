@@ -16,6 +16,9 @@
 namespace arphomod {
 using namespace std;
 
+using apActionContainer = unordered_map<string, function<void()>>;
+using apHookActionContainer = unordered_map<string,apActionContainer>;
+
 class apHookActionManager {
 public:
 	apHookActionManager();
@@ -26,7 +29,7 @@ public:
 
 		// if hook not found,
 		if(_actions.find(hook) == _actions.end()) {
-			_actions.emplace(std::forward<TString>(hook), std::set<string>());
+			_actions.emplace(std::forward<TString>(hook), apActionContainer{});
 		}
 	}
 
@@ -37,9 +40,8 @@ public:
 
 		addHook(hook);
 
-		// if tag not found,
-		_actions[hook].emplace(tag);
-		_tagToFunc.emplace(tag, std::forward<TFunc>(action));
+		// if tag not found, ignore.
+		_actions[hook].emplace(tag, std::forward<TFunc>(action));
 
 	}
 	// run hook. then all that function will be invoked.
@@ -64,8 +66,10 @@ public:
 
 private:
 	string _defaultTag {"empty"};
-	unordered_map<string,set<string>> _actions;
-	unordered_map<string, function<void()>> _tagToFunc;
+	// key: hook.
+	// value: key: actionTag.
+	//        value: action function
+	apHookActionContainer _actions;
 
 	static shared_ptr<apHookActionManager> _sp;
 };

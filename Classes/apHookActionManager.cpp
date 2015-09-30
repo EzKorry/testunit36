@@ -6,6 +6,7 @@
  */
 
 #include "apHookActionManager.h"
+#include <cocos2d.h>
 
 namespace arphomod {
 /*
@@ -31,14 +32,20 @@ void apHookActionManager::addAction(const std::string& hook, const std::string& 
 }*/
 
 // run hook. then all that function will be invoked.
+std::shared_ptr<apHookActionManager> apHookActionManager::_sp = nullptr;
+
+
+
 void apHookActionManager::runHook(const std::string& hook) {
 
 	// if hook found,
 	if(_actions.find(hook) != _actions.end()) {
 
+		// run each function.
 		for(auto& item : _actions[hook]) {
+			//cocos2d::log("actionManager RunHook string:%s",hook.c_str());
 
-			_tagToFunc[item]();
+			item.second();
 		}
 	}
 }
@@ -49,11 +56,6 @@ void apHookActionManager::removeHook(const std::string& hook) {
 	// if hook found,
 	if(_actions.find(hook) != _actions.end()) {
 
-		for(auto& item: _actions[hook]) {
-
-			_tagToFunc.erase(item);
-
-		}
 		_actions.erase(hook);
 	}
 
@@ -63,15 +65,12 @@ void apHookActionManager::removeHook(const std::string& hook) {
 void apHookActionManager::removeAction(const std::string& hook, const std::string& tag) {
 	auto actionIt = _actions.find(hook);
 	if(actionIt != _actions.end()) {
-		auto& set = (*actionIt).second;
-		auto funcIt = set.find(tag);
-		if(funcIt != set.end()) {
-			_tagToFunc.erase(tag);
-			set.erase(funcIt);
+		auto& map = (*actionIt).second;
+		auto funcIt = map.find(tag);
+		if(funcIt != map.end()) {
+			map.erase(funcIt);
 		}
-
 	}
-
 }
 
 

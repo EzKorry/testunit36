@@ -43,7 +43,7 @@ void apHookActionManager::runHook(const std::string& hook) {
 
 		// run each function.
 		for(auto& item : _actions[hook]) {
-			//cocos2d::log("actionManager RunHook string:%s",hook.c_str());
+			////cocos2d::log("actionManager RunHook string:%s",hook.c_str());
 
 			item.second();
 		}

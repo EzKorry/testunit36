@@ -717,11 +717,25 @@ ComponentTest::~ComponentTest() {
 
 bool MoveControllerTest::itemInit() {
 
+	auto sprite = Sprite::create("square.png");
+	sprite->setCameraMask((unsigned short)CameraFlag::USER1, true);
+	auto camera = Camera::createOrthographic(1, 1, 1, 1000);
+	camera->setCameraFlag(CameraFlag::USER1);
+	this->addChild(camera);
+	this->addChild(sprite);
+
+	auto am = MoveBy::create(1.0f, Vec2(0,100));
+	auto bm = MoveBy::create(1.0f, Vec2(0,-100));
+	auto sequence = Sequence::createWithTwoActions(am, bm);
+	auto inf = RepeatForever::create(sequence);
+
+	camera->runAction(inf);
+
 	return true;
 }
 
 std::string MoveControllerTest::getTitle() const {
-	return std::string("ControllerTest");
+	return std::string("Controller and camera Test");
 }
 
 MoveControllerTest::~MoveControllerTest() {

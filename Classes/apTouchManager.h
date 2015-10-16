@@ -213,7 +213,7 @@ private:
 	std::shared_ptr<apHookActionManager> _amp;
 
 	bool _enabled{true};
-	cocos2d::Touch* _nowTouch;
+	cocos2d::Touch* _nowTouch{nullptr};
 
 
 

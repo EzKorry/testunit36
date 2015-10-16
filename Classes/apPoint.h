@@ -27,7 +27,7 @@ public:
 		auto p = std::make_shared<apPoint>(x,y);
 		return p;
 	}
-	float x{0.0}, y{0.0};
+	float x{0.0f}, y{0.0f};
 
 private:
 

@@ -45,7 +45,7 @@ void APTouchManager::attachCallback(){
 }
 
 
-void APTouchManager::registerNode(cocos2d::Node* node,	APTouchChecker checker) {
+void APTouchManager::registerNode(cocos2d::Node* node, APTouchChecker checker) {
 
 	if (_d.find(node) != _d.end()) {
 		_d[node].checker = checker;
@@ -53,32 +53,10 @@ void APTouchManager::registerNode(cocos2d::Node* node,	APTouchChecker checker) {
 	} else {
 		// node retain.
 		node->retain();
-		//node->setonExitTransitionDidStartCallback([](){cocos2d::log("OnExitTransitionDidStart!!");});
-		//node->setOnExitCallback([](){cocos2d::log("onExit!!");});
 		_d.emplace(node, APTouchData(checker));
 	}
 }
-/*
-void apTouchManager::setNode(cocos2d::Node* node, apTouchBehavior behavior,
-		apTouchChecker checker) {
-	this->RegisterNode(node, behavior, checker, node->getGlobalZOrder());
-}
 
-void apTouchManager::setNode(cocos2d::Node* node, apTouchBehavior behavior) {
-	this->RegisterNode(node, behavior, createDefaultChecker(node), node->getGlobalZOrder());
-}
-*//*
-template<typename TFunc>
-void APTouchManager::addBehavior(cocos2d::Node* node,APTouchType timing, TFunc&& behavior, const std::string& hook, const std::string& behaviorTag) {
-	// lazy initializing.
-	if(_amp == nullptr) {
-		_amp = apHookActionManager::getInstance();
-	}
-	_amp->addAction(hook, behaviorTag, std::forward<TFunc>(behavior));
-	_d[node].hook.emplace(timing, hook);
-
-
-}*/
 
 // delete behavior
 void APTouchManager::delBehavior(const std::string& hook, const std::string& behaviorTag) {
@@ -141,9 +119,6 @@ void APTouchManager::clear() {
 	}
 	_d.clear();
 
-
-
-	//_isBegan.clear();
 }
 
 void APTouchManager::removeNode(cocos2d::Node* node) {
@@ -156,14 +131,19 @@ void APTouchManager::removeNode(cocos2d::Node* node) {
 		for(auto& item:_d[node].hook) {
 			_amp->removeHook(item.second);
 		}
-		_d.erase(node);
+		auto result = _d.erase(node);
+		//cocos2d::log("%d memer deleted! from touch manager _d map.",result);
+
+
 
 		node->release();
+		//cocos2d::log("node released!from touch manager --> %d",node);
 	}
+
+	debug_d();
 }
 
 void APTouchManager::cancelAllTouch() {
-	cocos2d::log("cancelTouch");
 	for (int i = 0; i < 6; i++) {
 		_touchToBeganNode[i] = nullptr;
 		_touchToNowNode[i] = nullptr;
@@ -184,7 +164,7 @@ APTouchChecker APTouchManager::createDefaultChecker(cocos2d::Node* node) {
 		auto rect = cocos2d::Rect(position.x - size.width * anchor.x,
 					position.y - size.height * anchor.y, size.width, size.height);
 
-		//cocos2d::log("name: %s, %f %f %f %f",node->getName().c_str(), rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+		////cocos2d::log("name: %s, %f %f %f %f",node->getName().c_str(), rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
 
 		return rect.containsPoint(touch->getLocation());
 
@@ -202,8 +182,8 @@ cocos2d::Rect APTouchManager::createDefaultRect(cocos2d::Node* node) {
 
 	auto rect = cocos2d::Rect(position.x - size.width * anchor.x,
 			position.y - size.height * anchor.y, size.width, size.height);
-	cocos2d::log("%f %f %f %f",position.x - size.width * anchor.x,
-			position.y - size.height * anchor.y, size.width, size.height);
+	//cocos2d::log("%f %f %f %f",position.x - size.width * anchor.x,
+			//position.y - size.height * anchor.y, size.width, size.height);
 	return rect;
 
 }
@@ -239,7 +219,7 @@ bool APTouchManager::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event){
 	if (_touchIDMap.find(touch->getID()) == _touchIDMap.end()) {
 		_touchIDMap.insert(decltype(_touchIDMap)::value_type(touch->getID, nullptr));
 	} else {
-		cocos2d::log("weird touchStarted");
+		//cocos2d::log("weird touchStarted");
 	}
 */
 	if(_amp == nullptr) {
@@ -273,6 +253,7 @@ bool APTouchManager::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event){
 
 void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 
+	debug_d();
 	auto id = touch->getID();
 
 	if(id > 5) return;
@@ -288,11 +269,11 @@ void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 	auto beforeNode = _touchToNowNode[id];
 	_touchToNowNode[id] = nowNode;
 
-	cocos2d::log("yo");
+	//cocos2d::log("yo");
 
 	auto originNode = _touchToBeganNode[id];
 	// outside
-	auto& originNodeHook = _d[originNode].hook;
+	//auto& originNodeHook = _d[originNode].hook;
 	//auto& nowNodeHook = _d[nowNode].hook;
 
 	// originNode : node when began that touch.
@@ -301,10 +282,10 @@ void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 
 	// go in or go out. now touching node differs with the last touched one.
 
-	//cocos2d::log("nowNode:%d, beforeNode:%d, originNode:%d", nowNode, beforeNode, originNode);
+	////cocos2d::log("nowNode:%d, beforeNode:%d, originNode:%d", nowNode, beforeNode, originNode);
 
 	if(beforeNode != nowNode) {
-		cocos2d::log("yo2");
+		//cocos2d::log("yo2");
 		// drag to origin node
 		if(nowNode == originNode) {
 			runHook(nowNode, APTouchType::MovedInner, touch);
@@ -326,7 +307,7 @@ void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 
 	// before node and now node are same.
 	else {
-		cocos2d::log("yo3");
+		//cocos2d::log("yo3");
 		// if all same.
 		if(nowNode == originNode) {
 			runHook(nowNode, APTouchType::MovedInside, touch);
@@ -338,7 +319,7 @@ void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 		}
 
 	}
-	cocos2d::log("yo4");
+	//cocos2d::log("yo4");
 
 
 
@@ -378,17 +359,17 @@ void APTouchManager::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event){
 
 inline void APTouchManager::runHook(cocos2d::Node* node, APTouchType touchType, cocos2d::Touch* nowTouch) {
 	_nowTouch = nowTouch;
-	if(node) {
-		cocos2d::log("runHook - yesNode!");
+	if(node && _d.find(node) != _d.end()) {
+		//cocos2d::log("runHook - yesNode!");
 		auto& hook = _d[node].hook;
-		cocos2d::log("f");
+		//cocos2d::log("f");
 		if(hook.find(touchType) != hook.end())
-			cocos2d::log("runHook - actionManagerRunHook!!");
+			//cocos2d::log("runHook - actionManagerRunHook!!");
 			_amp->runHook(hook[touchType]);
 
 	}
 	_nowTouch = nullptr;
-	cocos2d::log("end runhook");
+	//cocos2d::log("end runhook");
 }
 
 void APTouchManager::onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event){
@@ -430,7 +411,7 @@ void APTouchManager::touchEnded(cocos2d::Touch* touch, bool isCancelled) {
 	if (_touchIDMap.find(touch->getID()) != _touchIDMap.end()) {
 		_touchIDMap.erase(touch->getID());
 	} else {
-		cocos2d::log("weird touchEnded");
+		//cocos2d::log("weird touchEnded");
 	}*/
 }
 
@@ -464,28 +445,33 @@ cocos2d::Node* APTouchManager::getTouchedNode(cocos2d::Touch* touch) {
 
 	std::vector<cocos2d::Node*> TouchedNodes;
 	std::vector<cocos2d::Node*> NodesToBeRemoved;
-	cocos2d::log("a");
+	//cocos2d::log("a");
 	for (const auto& item : _d) {
 
 		auto node = item.first;
 		auto& data = item.second;
-		cocos2d::log("b");
+		//cocos2d::log("b");
 		// check if item is not available. then push to remove vector
-		if (node && !node->isRunning() && node->getParent() == nullptr)
-			NodesToBeRemoved.emplace_back(node);
+		// 널포인트는 아닌데, dangled일 경우 에러발생!!
 
+		//cocos2d::log("checking node is --> %d", node);
+		if (node && !node->isRunning() && node->getParent() == nullptr){
+			NodesToBeRemoved.emplace_back(node);
+			//cocos2d::log("nodes to be removed invoke!!");
+		}
 
 		// checker true and enabled true and max Touch is irrelevant
 		else if (node && node->isRunning() && data.checker(touch) && data.enabled && touch->getID() < data.maxTouch)
 			TouchedNodes.emplace_back(node);
-		cocos2d::log("c");
+		//cocos2d::log("SUCCESS TO DIVIDE Role!");
+
 	}
 
 	// node remove
 	for (const auto& item : NodesToBeRemoved) {
 		removeNode(item);
 	}
-	cocos2d::log("ad");
+	//cocos2d::log("ad");
 	// nothing touched.
 	if (TouchedNodes.empty()) {
 		return nullptr;
@@ -493,11 +479,11 @@ cocos2d::Node* APTouchManager::getTouchedNode(cocos2d::Touch* touch) {
 
 	// something touched
 	else {
-		cocos2d::log("e");
+		//cocos2d::log("e");
 		// sort
 		std::sort(TouchedNodes.begin(), TouchedNodes.end(),
 				[this](cocos2d::Node* left, cocos2d::Node* right)->bool {
-					return _d[left].order > _d[right].order;
+					return _d.at(left).order > _d.at(right).order;
 				});
 		return TouchedNodes[0];
 
@@ -522,14 +508,14 @@ void APTouchManager::touchStarted(cocos2d::Touch* touch) {
 
 }
 
-void APTouchManager::debug_d() {
+void APTouchManager::debug_d() {/*
 	int i = 0;
 	for(auto& item : _d) {
-		cocos2d::log("%d: hookCount:%d", i, item.second.hook.size());
+		//cocos2d::log("%d: hookCount:%d", i, item.second.hook.size());
 
 		i++;
 	}
-
+*/
 }
 
 

@@ -2,7 +2,7 @@
  * apPoint.cpp
  *
  *  Created on: 2015. 4. 24.
- *      Author: EzKorry
+ *      Author: EzKorry ajfasfjslakdfjdslkj
  */
 
 #include "../Classes/apPoint.h"
@@ -29,5 +29,3 @@ float apPoint::getY() const {
 */
 
 } /* namespace arphomod */
-
-
